@@ -81,6 +81,17 @@ app.get('/api/history', (req, res) => {
 
 
 const PORT = process.env.PORT || 3000;
+// Global Error Handlers
+process.on('uncaughtException', (err) => {
+    console.error('UNCAUGHT EXCEPTION:', err);
+    // Keep running if possible, but usually best to exit. 
+    // For now, logging is key to debug the crash.
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('UNHANDLED REJECTION:', reason);
+});
+
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });

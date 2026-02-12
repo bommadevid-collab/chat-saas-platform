@@ -96,9 +96,11 @@ class SessionManager {
                     this.userContext[msg.to] = [];
                 }
                 this.userContext[msg.to].push({ role: 'assistant', content: msg.body });
-                if (this.userContext[msg.to].length > 20) { // Limit context
-                    this.userContext[msg.to] = this.userContext[msg.to].slice(-20);
+                // STRICT MEMORY LIMIT: Keep only last 10 messages
+                if (this.userContext[msg.to].length > 10) {
+                    this.userContext[msg.to] = this.userContext[msg.to].slice(-10);
                 }
+                this.cleanupContext(); // Periodic cleanup check
             }
         });
 
@@ -121,10 +123,11 @@ class SessionManager {
             this.userContext[msg.from] = [];
         }
         this.userContext[msg.from].push({ role: 'user', content: msg.body });
-        // Keep last 20 messages for context
-        if (this.userContext[msg.from].length > 20) {
-            this.userContext[msg.from] = this.userContext[msg.from].slice(-20);
+        // STRICT MEMORY LIMIT: Keep only last 10 messages
+        if (this.userContext[msg.from].length > 10) {
+            this.userContext[msg.from] = this.userContext[msg.from].slice(-10);
         }
+        this.cleanupContext(); // Periodic cleanup check
 
         // Auto-reply logic
         try {
@@ -144,9 +147,8 @@ class SessionManager {
 
                 // Add reply to memory
                 this.userContext[msg.from].push({ role: 'assistant', content: reply });
-                // Keep last 20 messages for context
-                if (this.userContext[msg.from].length > 20) {
-                    this.userContext[msg.from] = this.userContext[msg.from].slice(-20);
+                if (this.userContext[msg.from].length > 10) {
+                    this.userContext[msg.from] = this.userContext[msg.from].slice(-10);
                 }
 
                 console.log(`[Replied] ${reply}`);
@@ -155,6 +157,25 @@ class SessionManager {
             }
         } catch (error) {
             console.error(`Error in auto-reply:`, error);
+        }
+    }
+
+    // Simple manual cleanup to prevent memory leaks from inactive users
+    cleanupContext() {
+        // If we have more than 50 active conversations, verify/purge
+        const users = Object.keys(this.userContext);
+        if (users.length > 50) {
+            console.log("Cleaning up old user contexts...");
+            // Naive approach: just wipe half of them or reset. 
+            // Ideally we'd track timestamps, but for "lowest RAM" 
+            // just keeping the map small is priority.
+            this.userContext = {};
+            console.log("User context cleared to free memory.");
+        }
+
+        // Try to force GC if strict params are on
+        if (global.gc) {
+            try { global.gc(); } catch (e) { }
         }
     }
 
