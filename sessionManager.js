@@ -12,6 +12,9 @@ class SessionManager {
         this.status = 'Offline';
         // this.chatHistory = []; // REMOVED for Ultra-Low RAM
         this.userContext = {}; // { phoneNumber: [ { role: 'user'|'assistant', content: '...' } ] }
+        this.reconnectAttempts = 0;
+        this.maxReconnectAttempts = 5;
+        this.reconnectTimeout = null;
 
         // Cache settings in memory
         this.settingsCache = null;
@@ -62,6 +65,7 @@ class SessionManager {
         this.client.on('ready', () => {
             console.log(`WhatsApp Client is ready!`);
             this.qrCode = null;
+            this.reconnectAttempts = 0; // Reset counter on success
             this.updateStatus('Ready');
             this.io.emit('ready');
         });
@@ -78,7 +82,24 @@ class SessionManager {
         this.client.on('disconnected', (reason) => {
             console.log(`Client disconnected:`, reason);
             this.updateStatus('Disconnected');
-            this.destroySession();
+
+            // Auto-reconnect logic
+            if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                this.reconnectAttempts++;
+                const delay = 10000; // 10 seconds
+                console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay / 1000}s...`);
+                this.updateStatus(`Reconnecting in ${delay / 1000}s...`);
+
+                this.reconnectTimeout = setTimeout(() => {
+                    this.destroySession().then(() => {
+                        this.startSession();
+                    });
+                }, delay);
+            } else {
+                console.log("Max reconnect attempts reached. Stopping.");
+                this.updateStatus('Offline (Max Retries)');
+                this.destroySession();
+            }
         });
 
         this.client.on('message', async (msg) => {
@@ -180,6 +201,7 @@ class SessionManager {
     }
 
     async destroySession() {
+        if (this.reconnectTimeout) clearTimeout(this.reconnectTimeout);
         if (this.client) {
             try {
                 await this.client.destroy();

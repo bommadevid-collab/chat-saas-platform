@@ -75,6 +75,26 @@ app.post('/api/session/stop', (req, res) => {
     res.json({ success: true, message: `Session stopped.` });
 });
 
+// Reduce inactivity timeouts
+app.get('/ping', (req, res) => {
+    res.send('pong');
+});
+
+// Self-ping to keep the server alive
+setInterval(() => {
+    try {
+        const protocol = process.env.RENDER ? 'https' : 'http';
+        const host = process.env.RENDER_EXTERNAL_URL || `localhost:${PORT}`;
+        const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
+        fetch(`${protocol}://${host}/ping`)
+            .then(res => console.log(`Ping... ${res.status}`))
+            .catch(err => console.error(`Ping failed: ${err.message}`));
+    } catch (e) {
+        console.error("Ping error:", e);
+    }
+}, 300000); // 5 minutes
+
 app.get('/api/history', (req, res) => {
     res.json({ history: sessionManager.chatHistory });
 });
