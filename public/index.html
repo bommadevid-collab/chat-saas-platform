@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BotNexus - AI WhatsApp Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <div class="logo">
+                <h2>BotNexus</h2>
+                <div class="status-indicator" id="connection-status">Offline</div>
+            </div>
+            <div class="actions">
+                <button onclick="openSettings()">⚙️ Settings</button>
+                <button onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <main class="main-content-single" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+            <div class="minimal-status" style="text-align: center; color: var(--text-secondary);">
+                <div class="logo-large" style="margin-bottom: 2rem;">
+                    <h1 style="font-size: 3rem; color: var(--accent-color); margin-bottom: 0.5rem;">BotNexus</h1>
+                    <p>Headless AI Manager</p>
+                </div>
+                
+                <div class="status-card" style="background: var(--card-bg); padding: 2rem; border-radius: 12px; border: var(--glass-border); min-width: 300px;">
+                    <h3>System Status</h3>
+                    <div id="connection-status" style="font-size: 1.5rem; margin: 1rem 0; font-weight: bold;">Offline</div>
+                    <div id="qr-container" style="margin-top: 1rem;">
+                        <p>Open Settings to Connect</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Control Panel</h3>
+                    <span class="close-modal" onclick="closeSettings()">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <!-- Status & QR -->
+                    <div class="card qr-card">
+                        <h3>Connection</h3>
+                        <div class="qr-container" id="qr-container">
+                            <p>Click "Start" to connect</p>
+                        </div>
+                        <div class="controls">
+                            <button class="btn btn-primary" onclick="startSession()">Start</button>
+                            <button class="btn btn-danger" onclick="stopSession()">Stop</button>
+                        </div>
+                    </div>
+
+                    <!-- Settings -->
+                    <div class="card settings-card">
+                        <h3>AI Settings</h3>
+                        <form id="settings-form">
+                            <div class="form-group">
+                                <label>System Prompt</label>
+                                <textarea id="system_prompt" rows="3"
+                                    placeholder="You are a helpful assistant..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Groq API Key</label>
+                                <input type="password" id="openai_key" placeholder="gsk_...">
+                            </div>
+                            <div class="form-group">
+                                <label>Model</label>
+                                <select id="openai_model">
+                                    <option value="" disabled selected>Loading models...</option>
+                                </select>
+                                <small id="model-loading" style="display:none; color: var(--accent-color);">Fetching
+                                    models...</small>
+                            </div>
+                            <button type="submit" class="btn btn-save">Save Configuration</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="app.js"></script>
+</body>
+
+</html>
